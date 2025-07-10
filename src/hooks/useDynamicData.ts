@@ -68,7 +68,7 @@ export const useDynamicData = () => {
 
         return {
             successRate: Math.round(successRate),
-            efficiencyScore: Math.round((interviewerStats.avgRating * 20) + (successRate * 0.5)),
+            efficiencyScore: Math.round((parseFloat(interviewerStats.avgRating) * 20) + (successRate * 0.5)),
             weeklyGrowth: interviewerStats.thisWeekInterviews > 0 ? "+" + interviewerStats.thisWeekInterviews : "0",
         };
     };
@@ -79,7 +79,7 @@ export const useDynamicData = () => {
 
         const insights = [];
 
-        if (interviewerStats.avgRating < 3.5) {
+        if (parseFloat(interviewerStats.avgRating) < 3.5) {
             insights.push({
                 type: "warning",
                 message: "Consider improving your feedback quality to increase candidate satisfaction",
