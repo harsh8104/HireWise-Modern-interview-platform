@@ -140,7 +140,9 @@ export default function Home() {
       value: `${interviewerStats?.avgRating || "0.0"}/5`,
       icon: Star,
       color: "text-yellow-600",
-      change: "+0.2 this month",
+      change: interviewerStats?.monthlyRatingChange
+        ? `${interviewerStats.monthlyRatingChange >= 0 ? "+" : ""}${interviewerStats.monthlyRatingChange.toFixed(1)} this month`
+        : "No change this month",
     },
   ];
 

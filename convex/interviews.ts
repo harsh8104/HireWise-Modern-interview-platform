@@ -91,6 +91,36 @@ export const getInterviewerStats = query({
           ).toFixed(1)
         : "0.0";
 
+    // Calculate monthly rating change
+    const monthAgo = new Date();
+    monthAgo.setMonth(monthAgo.getMonth() - 1);
+
+    const thisMonthComments = myComments.filter((comment) => {
+      const commentDate = new Date(comment._creationTime);
+      return commentDate > monthAgo;
+    });
+
+    const lastMonthComments = myComments.filter((comment) => {
+      const commentDate = new Date(comment._creationTime);
+      const twoMonthsAgo = new Date();
+      twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+      return commentDate > twoMonthsAgo && commentDate <= monthAgo;
+    });
+
+    const thisMonthAvgRating =
+      thisMonthComments.length > 0
+        ? thisMonthComments.reduce((sum, comment) => sum + comment.rating, 0) /
+          thisMonthComments.length
+        : 0;
+
+    const lastMonthAvgRating =
+      lastMonthComments.length > 0
+        ? lastMonthComments.reduce((sum, comment) => sum + comment.rating, 0) /
+          lastMonthComments.length
+        : 0;
+
+    const monthlyRatingChange = thisMonthAvgRating - lastMonthAvgRating;
+
     const thisWeekInterviews = myInterviews.filter((i) => {
       const interviewDate = new Date(i.startTime);
       const weekAgo = new Date();
@@ -128,6 +158,7 @@ export const getInterviewerStats = query({
       candidatesEvaluated,
       pendingReviews,
       avgRating,
+      monthlyRatingChange,
       thisWeekInterviews,
       thisWeekCompleted,
     };
