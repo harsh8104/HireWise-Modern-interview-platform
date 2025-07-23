@@ -33,7 +33,7 @@ export const getInterviewerInterviews = query({
     if (!identity) throw new Error("Unauthorized");
 
     const interviews = await ctx.db.query("interviews").collect();
-    return interviews.filter(interview =>
+    return interviews.filter((interview) =>
       interview.interviewerIds.includes(identity.subject)
     );
   },
@@ -47,51 +47,69 @@ export const getInterviewerStats = query({
     const interviews = await ctx.db.query("interviews").collect();
     const comments = await ctx.db.query("comments").collect();
 
-    const myInterviews = interviews.filter(interview =>
+    const myInterviews = interviews.filter((interview) =>
       interview.interviewerIds.includes(identity.subject)
     );
 
-    const myComments = comments.filter(comment =>
-      comment.interviewerId === identity.subject
+    const myComments = comments.filter(
+      (comment) => comment.interviewerId === identity.subject
     );
 
     const totalInterviews = myInterviews.length;
-    const completedInterviews = myInterviews.filter(i => i.status === "completed").length;
-    const succeededInterviews = myInterviews.filter(i => i.status === "succeeded").length;
-    const failedInterviews = myInterviews.filter(i => i.status === "failed").length;
-    const upcomingInterviews = myInterviews.filter(i => i.status === "upcoming").length;
-
-    // Candidates evaluated = completed interviews (both succeeded and failed)
-    const candidatesEvaluated = completedInterviews + succeededInterviews + failedInterviews;
-
-    // Pending reviews = interviews that are completed but no comment/rating submitted yet
-    const interviewsWithComments = myComments.map(comment => comment.interviewId);
-    const pendingReviews = myInterviews.filter(i =>
-      (i.status === "completed" || i.status === "succeeded" || i.status === "failed") &&
-      !interviewsWithComments.includes(i._id)
+    const completedInterviews = myInterviews.filter(
+      (i) => i.status === "completed"
+    ).length;
+    const succeededInterviews = myInterviews.filter(
+      (i) => i.status === "succeeded"
+    ).length;
+    const failedInterviews = myInterviews.filter(
+      (i) => i.status === "failed"
+    ).length;
+    const upcomingInterviews = myInterviews.filter(
+      (i) => i.status === "upcoming"
     ).length;
 
-    // Calculate average rating
-    const avgRating = myComments.length > 0
-      ? (myComments.reduce((sum, comment) => sum + comment.rating, 0) / myComments.length).toFixed(1)
-      : "0.0";
+    const candidatesEvaluated =
+      completedInterviews + succeededInterviews + failedInterviews;
 
-    // Calculate weekly changes (simplified - in real app you'd compare with previous week)
-    const thisWeekInterviews = myInterviews.filter(i => {
+    const interviewsWithComments = myComments.map(
+      (comment) => comment.interviewId
+    );
+    const pendingReviews = myInterviews.filter(
+      (i) =>
+        (i.status === "completed" ||
+          i.status === "succeeded" ||
+          i.status === "failed") &&
+        !interviewsWithComments.includes(i._id)
+    ).length;
+
+    const avgRating =
+      myComments.length > 0
+        ? (
+            myComments.reduce((sum, comment) => sum + comment.rating, 0) /
+            myComments.length
+          ).toFixed(1)
+        : "0.0";
+
+    const thisWeekInterviews = myInterviews.filter((i) => {
       const interviewDate = new Date(i.startTime);
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
       return interviewDate > weekAgo;
     }).length;
 
-    const thisWeekCompleted = myInterviews.filter(i => {
+    const thisWeekCompleted = myInterviews.filter((i) => {
       const interviewDate = new Date(i.startTime);
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
-      return interviewDate > weekAgo && (i.status === "completed" || i.status === "succeeded" || i.status === "failed");
+      return (
+        interviewDate > weekAgo &&
+        (i.status === "completed" ||
+          i.status === "succeeded" ||
+          i.status === "failed")
+      );
     }).length;
 
-    // Debug information
     console.log("Interviewer Stats Debug:", {
       totalInterviews,
       completedInterviews,
@@ -129,21 +147,29 @@ export const getCandidateStats = query({
       .collect();
 
     const totalInterviews = interviews.length;
-    const completedInterviews = interviews.filter(i =>
-      i.status === "completed" || i.status === "succeeded" || i.status === "failed"
+    const completedInterviews = interviews.filter(
+      (i) =>
+        i.status === "completed" ||
+        i.status === "succeeded" ||
+        i.status === "failed"
     ).length;
-    const upcomingInterviews = interviews.filter(i => i.status === "upcoming").length;
-    const succeededInterviews = interviews.filter(i => i.status === "succeeded").length;
-    const failedInterviews = interviews.filter(i => i.status === "failed").length;
+    const upcomingInterviews = interviews.filter(
+      (i) => i.status === "upcoming"
+    ).length;
+    const succeededInterviews = interviews.filter(
+      (i) => i.status === "succeeded"
+    ).length;
+    const failedInterviews = interviews.filter(
+      (i) => i.status === "failed"
+    ).length;
 
-    // Debug information
     console.log("Candidate Stats Debug:", {
       totalInterviews,
       completedInterviews,
       upcomingInterviews,
       succeededInterviews,
       failedInterviews,
-      allStatuses: interviews.map(i => i.status),
+      allStatuses: interviews.map((i) => i.status),
     });
 
     return {
@@ -173,23 +199,24 @@ export const getRecentActivity = query({
     let relevantInterviews = [];
 
     if (user.role === "interviewer") {
-      relevantInterviews = interviews.filter(interview =>
+      relevantInterviews = interviews.filter((interview) =>
         interview.interviewerIds.includes(identity.subject)
       );
     } else {
-      relevantInterviews = interviews.filter(interview =>
-        interview.candidateId === identity.subject
+      relevantInterviews = interviews.filter(
+        (interview) => interview.candidateId === identity.subject
       );
     }
 
-    // Sort by start time and take the most recent 5
     const recentInterviews = relevantInterviews
       .sort((a, b) => b.startTime - a.startTime)
       .slice(0, 5);
 
-    const activity = recentInterviews.map(interview => {
-      const candidate = users.find(u => u.clerkId === interview.candidateId);
-      const interviewers = users.filter(u => interview.interviewerIds.includes(u.clerkId));
+    const activity = recentInterviews.map((interview) => {
+      const candidate = users.find((u) => u.clerkId === interview.candidateId);
+      const interviewers = users.filter((u) =>
+        interview.interviewerIds.includes(u.clerkId)
+      );
 
       const timeAgo = getTimeAgo(interview.startTime);
 
@@ -204,7 +231,7 @@ export const getRecentActivity = query({
       } else {
         return {
           type: "interview",
-          title: `Interview with ${interviewers.map(i => i.name).join(", ")}`,
+          title: `Interview with ${interviewers.map((i) => i.name).join(", ")}`,
           time: timeAgo,
           status: interview.status,
           interviewId: interview._id,
@@ -274,39 +301,49 @@ export const getInterviewerPerformance = query({
     const interviews = await ctx.db.query("interviews").collect();
     const comments = await ctx.db.query("comments").collect();
 
-    const myInterviews = interviews.filter(interview =>
+    const myInterviews = interviews.filter((interview) =>
       interview.interviewerIds.includes(identity.subject)
     );
 
-    const completedInterviews = myInterviews.filter(i =>
-      (i.status === "completed" || i.status === "succeeded" || i.status === "failed") && i.endTime
+    const completedInterviews = myInterviews.filter(
+      (i) =>
+        (i.status === "completed" ||
+          i.status === "succeeded" ||
+          i.status === "failed") &&
+        i.endTime
     );
 
-    // Calculate average interview time
-    let avgInterviewTime = 45; // default
+    let avgInterviewTime = 45;
     if (completedInterviews.length > 0) {
       const totalTime = completedInterviews.reduce((sum, interview) => {
         return sum + (interview.endTime! - interview.startTime);
       }, 0);
-      avgInterviewTime = Math.round(totalTime / (1000 * 60 * completedInterviews.length));
+      avgInterviewTime = Math.round(
+        totalTime / (1000 * 60 * completedInterviews.length)
+      );
     }
 
-    // Calculate candidate satisfaction (simplified - based on ratings)
-    const myComments = comments.filter(comment =>
-      comment.interviewerId === identity.subject
+    const myComments = comments.filter(
+      (comment) => comment.interviewerId === identity.subject
     );
 
-    let candidateSatisfaction = 92; // default
+    let candidateSatisfaction = 92;
     if (myComments.length > 0) {
-      const avgRating = myComments.reduce((sum, comment) => sum + comment.rating, 0) / myComments.length;
+      const avgRating =
+        myComments.reduce((sum, comment) => sum + comment.rating, 0) /
+        myComments.length;
       candidateSatisfaction = Math.round((avgRating / 5) * 100);
     }
 
-    // Count pending reviews
-    const interviewsWithComments = myComments.map(comment => comment.interviewId);
-    const pendingReviews = myInterviews.filter(i =>
-      (i.status === "completed" || i.status === "succeeded" || i.status === "failed") &&
-      !interviewsWithComments.includes(i._id)
+    const interviewsWithComments = myComments.map(
+      (comment) => comment.interviewId
+    );
+    const pendingReviews = myInterviews.filter(
+      (i) =>
+        (i.status === "completed" ||
+          i.status === "succeeded" ||
+          i.status === "failed") &&
+        !interviewsWithComments.includes(i._id)
     ).length;
 
     return {
@@ -326,7 +363,7 @@ export const getInterviewsByInterviewer = query({
     if (!identity) throw new Error("Unauthorized");
 
     const interviews = await ctx.db.query("interviews").collect();
-    return interviews.filter(interview =>
+    return interviews.filter((interview) =>
       interview.interviewerIds.includes(args.interviewerId)
     );
   },
@@ -334,8 +371,6 @@ export const getInterviewsByInterviewer = query({
 
 export const getInterviewTips = query({
   handler: async (ctx) => {
-    // In a real app, this would come from a database table
-    // For now, returning dynamic tips based on user role
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Unauthorized");
 
@@ -348,7 +383,8 @@ export const getInterviewTips = query({
       return [
         {
           title: "Create a Welcoming Environment",
-          description: "Start with small talk to help candidates feel comfortable",
+          description:
+            "Start with small talk to help candidates feel comfortable",
           category: "communication",
           priority: 1,
         },
@@ -360,7 +396,8 @@ export const getInterviewTips = query({
         },
         {
           title: "Take Detailed Notes",
-          description: "Document key points and observations during the interview",
+          description:
+            "Document key points and observations during the interview",
           category: "documentation",
           priority: 3,
         },
@@ -393,7 +430,8 @@ export const getInterviewTips = query({
         },
         {
           title: "Prepare Questions",
-          description: "Have thoughtful questions ready about the role and team",
+          description:
+            "Have thoughtful questions ready about the role and team",
           category: "preparation",
           priority: 4,
         },
@@ -423,7 +461,8 @@ export const getInterviewResources = query({
         },
         {
           title: "Evaluation Rubrics",
-          description: "Standardized criteria for consistent candidate assessment",
+          description:
+            "Standardized criteria for consistent candidate assessment",
           category: "evaluation",
           stats: "15 categories",
           url: "/resources/rubrics",
@@ -468,26 +507,6 @@ export const getInterviewResources = query({
   },
 });
 
-export const getMarketInsights = query({
-  handler: async (ctx) => {
-    // This would typically fetch from a market data API
-    // For now, returning simulated market insights for Indian market
-    return {
-      totalInterviewsThisWeek: 8500,
-      averageInterviewDuration: 45,
-      topSkillsInDemand: ["Java", "Python", "React", "Node.js", "AWS", "Docker", "Kubernetes", "MongoDB", "Spring Boot", "Angular"],
-      industryTrends: [
-        { skill: "AI/ML", growth: "+28%" },
-        { skill: "Cloud Computing", growth: "+22%" },
-        { skill: "Cybersecurity", growth: "+18%" },
-        { skill: "DevOps", growth: "+25%" },
-        { skill: "Mobile Development", growth: "+20%" },
-      ],
-    };
-  },
-});
-
-// Helper function to calculate time ago
 function getTimeAgo(timestamp: number): string {
   const now = Date.now();
   const diff = now - timestamp;
@@ -496,10 +515,10 @@ function getTimeAgo(timestamp: number): string {
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
   if (minutes < 60) {
-    return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+    return `${minutes} minute${minutes !== 1 ? "s" : ""} ago`;
   } else if (hours < 24) {
-    return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+    return `${hours} hour${hours !== 1 ? "s" : ""} ago`;
   } else {
-    return `${days} day${days !== 1 ? 's' : ''} ago`;
+    return `${days} day${days !== 1 ? "s" : ""} ago`;
   }
 }
