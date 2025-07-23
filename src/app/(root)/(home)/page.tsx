@@ -508,16 +508,10 @@ export default function Home() {
                 <h3 className="text-xl font-semibold mb-2">
                   No Scheduled Interviews
                 </h3>
-                <p className="text-muted-foreground mb-6">
+                <p className="text-muted-foreground">
                   You don't have any interviews scheduled at the moment. Use
                   this time to prepare!
                 </p>
-                <button
-                  onClick={() => router.push("/resources")}
-                  className="bg-primary text-primary-foreground px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors"
-                >
-                  Explore Preparation Resources
-                </button>
               </div>
             )}
           </div>
