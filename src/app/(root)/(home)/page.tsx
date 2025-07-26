@@ -29,7 +29,6 @@ import {
   Lightbulb,
   ClipboardList,
   Timer,
-  ThumbsUp,
   AlertCircle,
   PlusCircle,
   Search,
@@ -398,14 +397,14 @@ export default function Home() {
               </div>
               <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <ThumbsUp className="h-5 w-5 text-green-600" />
-                  <span className="font-semibold">Candidate Satisfaction</span>
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <span className="font-semibold">Interview Success Rate</span>
                 </div>
                 <p className="text-2xl font-bold text-green-600">
-                  {performance?.candidateSatisfaction || 92}%
+                  {performance?.interviewSuccessRate || 0}%
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Based on post-interview surveys
+                  succeeded interviews vs total
                 </p>
               </div>
               <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-4">

@@ -358,13 +358,14 @@ export const getInterviewerPerformance = query({
       (comment) => comment.interviewerId === identity.subject
     );
 
-    let candidateSatisfaction = 92;
-    if (myComments.length > 0) {
-      const avgRating =
-        myComments.reduce((sum, comment) => sum + comment.rating, 0) /
-        myComments.length;
-      candidateSatisfaction = Math.round((avgRating / 5) * 100);
-    }
+    // Calculate Interview Success Rate
+    const successfulInterviews = myInterviews.filter(
+      (i) => i.status === "succeeded"
+    ).length;
+    const interviewSuccessRate =
+      myInterviews.length > 0
+        ? Math.round((successfulInterviews / myInterviews.length) * 100)
+        : 0;
 
     const interviewsWithComments = myComments.map(
       (comment) => comment.interviewId
@@ -379,7 +380,7 @@ export const getInterviewerPerformance = query({
 
     return {
       avgInterviewTime,
-      candidateSatisfaction,
+      interviewSuccessRate,
       pendingReviews,
     };
   },
