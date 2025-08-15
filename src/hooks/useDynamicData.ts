@@ -53,16 +53,11 @@ export const useDynamicData = () => {
   const getDerivedStats = () => {
     if (!interviewerStats) return null;
 
-    const totalInterviews = interviewerStats.totalInterviews;
-    const completedInterviews = interviewerStats.completedInterviews;
-    const candidatesEvaluated =
-      interviewerStats.candidatesEvaluated ||
-      interviewerStats.completedInterviews;
-    const successRate =
-      totalInterviews > 0 ? (candidatesEvaluated / totalInterviews) * 100 : 0;
+    // Get the correct success rate directly from the server-calculated value
+    const successRate = performance?.interviewSuccessRate || 0;
 
     return {
-      successRate: Math.round(successRate),
+      // No need to include successRate here since it's already available directly in performance
       efficiencyScore: Math.round(
         parseFloat(interviewerStats.avgRating) * 20 + successRate * 0.5
       ),
